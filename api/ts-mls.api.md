@@ -290,6 +290,13 @@ export function createProposal(params: {
     authenticatedData?: Uint8Array;
 }): Promise<CreateMessageResult>;
 
+// @public
+export function createSelfRemoveProposal(params: {
+    context: MlsContext;
+    state: ClientState;
+    authenticatedData?: Uint8Array;
+}): Promise<CreateMessageResult>;
+
 // @public (undocumented)
 export function createUpdateProposal(params: {
     context: MlsContext;
@@ -595,10 +602,7 @@ export interface FramedContentProposalData {
 }
 
 // @public (undocumented)
-export function generateKeyPackage(params: GenerateKeyPackageParams): Promise<{
-    publicPackage: KeyPackage;
-    privatePackage: PrivateKeyPackage;
-}>;
+export function generateKeyPackage(params: GenerateKeyPackageParams): Promise<KeyPackageWithPrivateKey>;
 
 // @public (undocumented)
 export interface GenerateKeyPackageParams {
@@ -617,10 +621,7 @@ export interface GenerateKeyPackageParams {
 }
 
 // @public (undocumented)
-export function generateKeyPackageWithKey(params: GenerateKeyPackageWithKeyParams): Promise<{
-    publicPackage: KeyPackage;
-    privatePackage: PrivateKeyPackage;
-}>;
+export function generateKeyPackageWithKey(params: GenerateKeyPackageWithKeyParams): Promise<KeyPackageWithPrivateKey>;
 
 // @public (undocumented)
 export interface GenerateKeyPackageWithKeyParams {
@@ -713,6 +714,9 @@ export interface GroupContext {
     // (undocumented)
     version: ProtocolVersionValue;
 }
+
+// @public (undocumented)
+export const groupContextEncoder: Encoder<GroupContext>;
 
 // @public (undocumented)
 export type GroupContextExtension = ExtensionRequiredCapabilities | ExtensionExternalSenders | CustomExtension;
@@ -880,6 +884,9 @@ export function isDefaultExtension(e: Extension): e is DefaultExtension;
 export function isDefaultProposal(p: Proposal): p is DefaultProposal;
 
 // @public (undocumented)
+export function isSelfRemoveProposal(p: Proposal): p is ProposalSelfRemove;
+
+// @public (undocumented)
 export function joinGroup(params: {
     context: MlsContext;
     welcome: Welcome;
@@ -925,6 +932,7 @@ export function joinGroupFromReinit(params: {
 
 // @public (undocumented)
 export interface JoinGroupResult {
+    groupInfo: GroupInfo;
     // (undocumented)
     groupInfoExtensions: GroupInfoExtension[];
     // (undocumented)
@@ -983,6 +991,14 @@ export type KeyPackageTBS = {
     leafNode: LeafNodeKeyPackage;
     extensions: CustomExtension[];
 };
+
+// @public (undocumented)
+export interface KeyPackageWithPrivateKey {
+    // (undocumented)
+    privatePackage: PrivateKeyPackage;
+    // (undocumented)
+    publicPackage: KeyPackage;
+}
 
 // @public (undocumented)
 export interface KeyRetentionConfig {
@@ -1095,6 +1111,9 @@ export type LeafNodeSourceValue = (typeof leafNodeSources)[LeafNodeSourceName];
 export type LeafNodeUpdate = LeafNode & {
     leafNodeSource: typeof leafNodeSources.update;
 };
+
+// @public (undocumented)
+export function leafToNodeIndex(leafIndex: LeafIndex): NodeIndex;
 
 // @public (undocumented)
 export interface Lifetime {
@@ -1226,6 +1245,9 @@ type Node_2 = NodeParent | NodeLeaf;
 export { Node_2 as Node }
 
 // @public (undocumented)
+export type NodeIndex = Brand<number, "NodeIndex">;
+
+// @public (undocumented)
 export type NodeLeaf = {
     nodeType: typeof nodeTypes.leaf;
     leaf: LeafNode;
@@ -1329,6 +1351,7 @@ export type ProcessMessageResult = {
     newState: ClientState;
     consumed: Uint8Array[];
     aad: Uint8Array;
+    senderLeafIndex: number | undefined;
 };
 
 // @public
@@ -1348,7 +1371,7 @@ export function processPublicMessage(params: {
 }): Promise<NewStateWithActionTaken>;
 
 // @public (undocumented)
-export type Proposal = DefaultProposal | ProposalAppDataUpdate | ProposalCustom;
+export type Proposal = DefaultProposal | ProposalAppDataUpdate | ProposalSelfRemove | ProposalCustom;
 
 // @public (undocumented)
 export interface ProposalAdd {
@@ -1437,6 +1460,12 @@ export interface ProposalRemove {
     proposalType: typeof defaultProposalTypes.remove;
     // (undocumented)
     remove: Remove;
+}
+
+// @public
+export interface ProposalSelfRemove {
+    // (undocumented)
+    proposalType: typeof selfRemoveProposalType;
 }
 
 // @public (undocumented)
@@ -1646,6 +1675,9 @@ export interface SecretTreeNode {
     // (undocumented)
     handshake: GenerationSecret;
 }
+
+// @public
+export const selfRemoveProposalType = 10;
 
 // @public (undocumented)
 export type Sender = SenderMember | SenderNonMember;
